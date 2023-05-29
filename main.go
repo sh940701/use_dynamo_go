@@ -8,11 +8,15 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"log"
 	"os"
+	"time"
 	"use_dynamo_go/dataHandler"
 	"use_dynamo_go/dbHandler"
 )
 
 func main() {
+	start := time.Now()
+
+	// 기본 세팅
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		log.Fatal(err)
@@ -25,15 +29,37 @@ func main() {
 		TableName:      "buildings",
 	}
 
+	// 테이블 생성
+	CreateTable(basic)
+
+	inputFilePath := "testForEach.txt"
+	//inputFilePath := "testForBatch.txt"
+	//inputFilePath := "/Users/sunghyun/Desktop/mart_djy_03.txt"
+
+	// 개별 데이터 insert
+	InsertDataEach(inputFilePath, basic)
+
+	// 25개 단위 데이터 insert
+	InsertDataBatch(inputFilePath, basic)
+
+	duration := time.Since(start)
+
+	fmt.Println("경과 시간: ", duration)
+}
+
+// 테이블 생성 함수
+func CreateTable(basic dbHandler.TableBasics) {
 	//테이블 생성
 	tableDesc, err := basic.CreateTable()
 	if err != nil {
 		fmt.Println(err)
 	}
 	fmt.Println("tableDesc: ", tableDesc, "\n", "err: ", err)
+}
 
+// 데이터 한개씩 삽입 함수
+func InsertDataEach(inputFilePath string, basic dbHandler.TableBasics) {
 	// file config
-	inputFilePath := "testfile.txt"
 	inputFile, err := os.Open(inputFilePath)
 	if err != nil {
 		fmt.Println(err)
@@ -55,9 +81,9 @@ func main() {
 			panic(err)
 		}
 	}
-
 }
 
+// 데이터 25개씩 삽입 함수
 func InsertDataBatch(inputFilePath string, basic dbHandler.TableBasics) {
 	// file config
 	inputFile, err := os.Open(inputFilePath)
