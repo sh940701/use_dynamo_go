@@ -2,7 +2,9 @@ package dbHandler
 
 import (
 	"context"
+	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"log"
@@ -19,7 +21,7 @@ func (basics TableBasics) CreateTable() (*types.TableDescription, error) {
 	table, err := basics.DynamoDbClient.CreateTable(context.TODO(), &dynamodb.CreateTableInput{
 		AttributeDefinitions: []types.AttributeDefinition{{
 			AttributeName: aws.String("PK"),
-			AttributeType: types.ScalarAttributeTypeN,
+			AttributeType: types.ScalarAttributeTypeS,
 		}, {
 			AttributeName: aws.String("address"),
 			AttributeType: types.ScalarAttributeTypeS,
@@ -46,4 +48,22 @@ func (basics TableBasics) CreateTable() (*types.TableDescription, error) {
 		tableDesc = table.TableDescription
 	}
 	return tableDesc, err
+}
+
+func (basics TableBasics) AddBuilding(building map[string]string) error {
+	item, err := attributevalue.MarshalMap(building)
+	fmt.Println(building)
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = basics.DynamoDbClient.PutItem(context.TODO(), &dynamodb.PutItemInput{
+		TableName: aws.String(basics.TableName), Item: item,
+	})
+
+	if err != nil {
+		log.Printf("Couldn't add item to table. Here's why: %v\n", err)
+	}
+
+	return err
 }
