@@ -31,11 +31,8 @@ func (basics TableBasics) CreateTable() (*types.TableDescription, error) {
 			AttributeName: aws.String("address"),
 			KeyType:       types.KeyTypeRange,
 		}},
-		TableName: aws.String(basics.TableName),
-		ProvisionedThroughput: &types.ProvisionedThroughput{
-			ReadCapacityUnits:  aws.Int64(1000),
-			WriteCapacityUnits: aws.Int64(1000),
-		},
+		TableName:   aws.String(basics.TableName),
+		BillingMode: types.BillingModePayPerRequest,
 	})
 	if err != nil {
 		log.Printf("Couldn't create table %v. Here's why: %v\n", basics.TableName, err)
