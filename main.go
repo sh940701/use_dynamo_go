@@ -95,6 +95,8 @@ func InsertDataBatch(inputFilePath string, basic dbHandler.TableBasics) {
 
 	scanner := bufio.NewScanner(inputFile)
 
+	MAX_COUNT := 25
+
 	// txt 파일의 모든 문서를 25개씩 write 요청
 	// 1080개 기준 싱글스레드 경과 시간: 988.009375ms
 	// 전체 파일 기준 싱글스레드 경과 시간: 2 시간 이상
@@ -106,8 +108,8 @@ func InsertDataBatch(inputFilePath string, basic dbHandler.TableBasics) {
 			"address": strData[6],
 		}
 		buildings = append(buildings, building)
-		if len(buildings) == 25 {
-			buildingsCopy := make([]map[string]string, len(buildings))
+		if len(buildings) == MAX_COUNT {
+			buildingsCopy := make([]map[string]string, MAX_COUNT)
 			copy(buildingsCopy, buildings)
 			err := basic.AddBuildings(buildingsCopy)
 			if err != nil {
