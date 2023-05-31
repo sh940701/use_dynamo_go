@@ -45,6 +45,7 @@ func (basics TableBasics) CreateTable() (*types.TableDescription, error) {
 	if err != nil {
 		log.Printf("Couldn't create table %v. Here's why: %v\n", basics.TableName, err)
 	} else {
+		fmt.Printf("table created successfully: %s\n", *table.TableDescription.TableName)
 		waiter := dynamodb.NewTableExistsWaiter(basics.DynamoDbClient)
 		err = waiter.Wait(context.TODO(), &dynamodb.DescribeTableInput{
 			TableName: aws.String(basics.TableName)}, 5*time.Minute)
