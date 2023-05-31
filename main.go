@@ -17,7 +17,11 @@ func main() {
 	start := time.Now()
 
 	// 기본 세팅
-	cfg, err := config.LoadDefaultConfig(context.TODO())
+	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRetryer(func() aws.Retryer {
+		return retry.NewStandard(func(so *retry.StandardOptions) {
+			so.RateLimiter = ratelimit.NewTokenRateLimit(1000000)
+		})
+	}))
 	if err != nil {
 		log.Fatal(err)
 	}
