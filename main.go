@@ -4,10 +4,14 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/aws/ratelimit"
+	"github.com/aws/aws-sdk-go-v2/aws/retry"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"log"
 	"os"
+	"sync"
 	"time"
 	"use_dynamo_go/dataHandler"
 	"use_dynamo_go/dbHandler"
@@ -109,7 +113,7 @@ func InsertDataBatch(inputFilePath string, basic dbHandler.TableBasics) {
 	// 전체 파일 기준 싱글스레드 경과 시간: 2 시간 이상
 	var buildings []map[string]string
 	for scanner.Scan() {
-		strData := dataHandler.SplitByPipeline(scanner.Text())
+		strData := dataHandler.SplitByString(scanner.Text(), "|")
 		building := map[string]string{
 			"PK":      strData[0],
 			"address": strData[6],
@@ -118,17 +122,84 @@ func InsertDataBatch(inputFilePath string, basic dbHandler.TableBasics) {
 		if len(buildings) == MAX_COUNT {
 			buildingsCopy := make([]map[string]string, MAX_COUNT)
 			copy(buildingsCopy, buildings)
-			err := basic.AddBuildings(buildingsCopy)
-			if err != nil {
-				panic(err)
-			}
+			basic.AddBuildings(buildingsCopy)
 			buildings = buildings[:0]
 		}
 	}
 
 	// 남은 항목 추가
-	err = basic.AddBuildings(buildings)
+	basic.AddBuildings(buildings)
+}
+
+// goroutine batch
+func InsertDataBatchParallel(inputFilePath string, basic dbHandler.TableBasics) {
+	counter := 0
+	// file config
+	inputFile, err := os.Open(inputFilePath)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
+		return
+	}
+	defer inputFile.Close()
+
+	MAX_COUNT := 25
+
+	scanner := bufio.NewScanner(inputFile)
+
+	var buildings []map[string]string
+
+	var wg sync.WaitGroup // WaitGroup 선언
+
+	for scanner.Scan() {
+		strData := dataHandler.SplitByString(scanner.Text(), "|")
+		building := map[string]string{
+			"PK":      strData[0],
+			"address": strData[6],
+		}
+		buildings = append(buildings, building)
+
+		if len(buildings) == MAX_COUNT*2300 {
+			counter++
+			wg.Add(1) // WaitGroup 추가
+
+			go func(buildings []map[string]string) {
+				batchByThousand(buildings, basic, counter)
+				wg.Done() // WaitGroup 완료 시그널 전송
+			}(buildings)
+
+			wg.Wait() // 모든 batchByThousand 함수가 완료될 때까지 대기
+			buildings = buildings[:0]
+		}
+	}
+
+	// 나머지
+	if len(buildings) > 0 {
+		wg.Add(1) // WaitGroup 추가
+
+		go func(buildings []map[string]string) {
+			batchByThousand(buildings, basic, counter)
+			wg.Done() // WaitGroup 완료 시그널 전송
+		}(buildings)
+	}
+
+}
+
+func batchByThousand(data []map[string]string, basic dbHandler.TableBasics, counter int) {
+	fmt.Println("batchByThousand working...", counter)
+	var wg sync.WaitGroup
+	defer wg.Wait()
+	semaphore := make(chan struct{}, 2300)
+	for i := 0; i < 2300*25; i += 25 {
+		wg.Add(1)
+		semaphore <- struct{}{}
+		i := i
+		go func(i int) {
+			defer func() {
+				<-semaphore
+				wg.Done()
+			}()
+
+			basic.AddBuildings(data[i : i+25])
+		}(i)
 	}
 }
