@@ -19,20 +19,26 @@ type TableBasics struct {
 func (basics TableBasics) CreateTable() (*types.TableDescription, error) {
 	var tableDesc *types.TableDescription
 	table, err := basics.DynamoDbClient.CreateTable(context.TODO(), &dynamodb.CreateTableInput{
-		AttributeDefinitions: []types.AttributeDefinition{{
-			AttributeName: aws.String("PK"),
-			AttributeType: types.ScalarAttributeTypeS,
-		}, {
-			AttributeName: aws.String("address"),
-			AttributeType: types.ScalarAttributeTypeS,
-		}},
-		KeySchema: []types.KeySchemaElement{{
-			AttributeName: aws.String("PK"),
-			KeyType:       types.KeyTypeHash,
-		}, {
-			AttributeName: aws.String("address"),
-			KeyType:       types.KeyTypeRange,
-		}},
+		AttributeDefinitions: []types.AttributeDefinition{
+			{
+				AttributeName: aws.String("PK"),
+				AttributeType: types.ScalarAttributeTypeS,
+			},
+			{
+				AttributeName: aws.String("Address"),
+				AttributeType: types.ScalarAttributeTypeS,
+			},
+		},
+		KeySchema: []types.KeySchemaElement{
+			{
+				AttributeName: aws.String("PK"),
+				KeyType:       types.KeyTypeHash,
+			},
+			{
+				AttributeName: aws.String("Address"),
+				KeyType:       types.KeyTypeRange,
+			},
+		},
 		TableName:   aws.String(basics.TableName),
 		BillingMode: types.BillingModePayPerRequest,
 	})
