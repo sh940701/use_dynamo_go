@@ -71,7 +71,7 @@ func InsertDataEach(inputFilePath string, basic dbHandler.TableBasics) {
 
 	// txt 파일의 모든 문서를 한개씩 write 요청
 	for scanner.Scan() {
-		strData := dataHandler.SplitByPipeline(scanner.Text())
+		strData := dataHandler.SplitByString(scanner.Text(), "|")
 		building := map[string]string{
 			"PK":      strData[0],
 			"address": strData[6],
