@@ -36,15 +36,18 @@ func main() {
 	// 테이블 생성
 	CreateTable(basic)
 
-	inputFilePath := "testForEach.txt"
+	//inputFilePath := "testForEach.txt"
 	//inputFilePath := "testForBatch.txt"
 	//inputFilePath := "/Users/sunghyun/Desktop/mart_djy_03.txt"
 
 	// 개별 데이터 insert
-	InsertDataEach(inputFilePath, basic)
+	//InsertDataEach(inputFilePath, basic)
 
 	// 25개 단위 데이터 insert
-	InsertDataBatch(inputFilePath, basic)
+	//InsertDataBatch(inputFilePath, basic)
+
+	// 25개 단위 병렬 데이터 insert
+	//InsertDataBatchParallel(inputFilePath, basic)
 
 	duration := time.Since(start)
 
