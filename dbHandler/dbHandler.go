@@ -75,7 +75,7 @@ func (basics TableBasics) AddBuilding(building map[string]string) error {
 	return err
 }
 
-func (basics TableBasics) AddBuildings(buildings []map[string]string) error {
+func (basics TableBasics) AddBuildings(buildings []map[string]string) {
 	var err error
 	var item map[string]types.AttributeValue
 	var writeReqs []types.WriteRequest
@@ -97,5 +97,4 @@ func (basics TableBasics) AddBuildings(buildings []map[string]string) error {
 		log.Printf("Couldn't add a batch of buildings to %v. Here's why: %v\n", basics.TableName, err)
 	}
 
-	return nil
 }
